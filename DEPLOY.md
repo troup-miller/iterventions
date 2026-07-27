@@ -214,11 +214,11 @@ Verified 2026-07-26.
 | GitHub repo secrets | ✅ both set |
 | Pages project | ✅ `iterventions`, production branch `main` |
 | **Deployed** | ✅ **live at `iterventions.pages.dev`** |
-| Custom domain | ⬜ `iterventions.com` not attached — Phase 6 |
+| Custom domain | 🟡 both hostnames attached, **pending** — needs two DNS records, Phase 6a |
 | Browser verification | ⬜ Phase 7, needs human eyes |
 
-Phases 1–5 are done. Deploying from here is `git push`. What remains is the domain and a
-look at it in a real browser.
+Phases 1–5 are done. Deploying from here is `git push`. What remains is two DNS records and a
+look at the site in a real browser.
 
 ---
 
@@ -330,10 +330,14 @@ Open **https://dash.cloudflare.com/profile/api-tokens** in a browser.
 |---|---|---|---|---|
 | 1 | Account | Cloudflare Pages | **Edit** | lets it upload the site |
 | 2 | Account | Account Settings | **Read** | lets it look up your account ID |
-| 3 | Zone | DNS | **Edit** | only needed if you want automation to touch DNS later — safe to skip |
+| 3 | Zone | DNS | **Edit** | lets Cloudflare create the DNS record when you attach a custom domain |
 
-Row 3 is optional. Skip it if you are attaching the domain by hand in Phase 6, which is what
-this runbook does. Fewer permissions is better.
+**Row 3 is optional, and this token does not have it.** The consequence is specific and worth
+knowing before you decide: without zone access, attaching a custom domain creates the hostname
+but **not** the DNS record that makes it resolve, leaving it stuck at `pending` with
+`CNAME record not set` — see [Phase 6a](#6a-attach-both-hostnames). Adding that record by hand
+is a one-time job, so a deploy token that cannot touch your DNS is a fair trade. Fewer
+permissions is better.
 
 5. Under **Account Resources**, set the dropdown to **Include** and pick your account by name.
    Do not leave it on "All accounts."
@@ -606,13 +610,45 @@ would otherwise be — no nameserver changes, no waiting for propagation.
 
 ### 6a. Attach both hostnames
 
-1. Cloudflare dashboard → **Workers & Pages** → click **iterventions**.
-2. **Custom domains** tab → **Set up a custom domain**.
-3. Type `iterventions.com`. Click **Continue** → **Activate domain**.
-4. Repeat for `www.iterventions.com`.
+**Both hostnames are already attached** — done via the Pages API on 2026-07-26. They are sitting
+at status **pending**, and the reason is worth understanding, because it is a trap:
 
-Cloudflare writes the DNS records itself and issues a TLS certificate. The status will read
-**Initializing** for a few minutes, then **Active**. Up to 15 minutes is normal. Go make coffee.
+```
+"name": "iterventions.com",
+"status": "pending",
+"verification_data": { "status": "pending", "error_message": "CNAME record not set" }
+```
+
+Attaching a hostname to a Pages project and creating the DNS record that points at it are **two
+different operations against two different permissions.** The deploy token has Pages access and
+no zone access at all — `GET /zones?name=iterventions.com` returns zero results for it — so
+Cloudflare accepted the hostname and then could not write the record.
+
+This is the permission marked "safe to skip" in the Phase 2a table. It is safe to skip for
+*deploying*; it is what makes *attaching a domain* automatic. Skipping it is a reasonable
+trade — a deploy token that cannot touch DNS is a smaller blast radius — it just means the
+records go in by hand, once, forever.
+
+**So add the two records.** Dashboard → select the **iterventions.com** zone → **DNS** →
+**Records** → **Add record**, twice:
+
+| Type | Name | Target | Proxy |
+|---|---|---|---|
+| CNAME | `@` | `iterventions.pages.dev` | **Proxied** (orange cloud) |
+| CNAME | `www` | `iterventions.pages.dev` | **Proxied** (orange cloud) |
+
+`@` means the bare domain. A CNAME at the apex is normally illegal in DNS; Cloudflare allows it
+via CNAME flattening, which is one of the genuine advantages of the domain already being here.
+
+The orange cloud matters. Grey-clouded (DNS-only) records skip Cloudflare's edge, and the
+certificate will never issue.
+
+Within a few minutes both entries under **Workers & Pages → iterventions → Custom domains**
+flip from **Pending** to **Active**, and the certificate issues. Up to 15 minutes is normal.
+
+*(The alternative is to go the other way: Workers & Pages → iterventions → Custom domains →
+Set up a custom domain. That flow creates the DNS record for you because it acts as your
+dashboard session rather than as the deploy token. Either route ends in the same place.)*
 
 **Check from the terminal:**
 
