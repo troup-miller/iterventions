@@ -16,8 +16,10 @@ Read this first; it saves re-deriving the state from git and the filesystem.
   Git auth is pinned to account `troup-miller`; pushes are silent.
 - **The site is deployed** at `iterventions.pages.dev`. Cloudflare Pages project `iterventions`,
   production branch `main`, both repo secrets set, `gh` logged in. Pushing to `main` publishes.
-- **`iterventions.com` is not attached yet** — Phase 6 of `DEPLOY.md`, dashboard work.
-  Browser verification (Phase 7) is also still outstanding.
+- **`iterventions.com` is attached but pending.** Both hostnames are on the Pages project; they
+  are waiting on two CNAME records that the deploy token has no permission to create. Phase 6a
+  of `DEPLOY.md` has the exact records. Browser verification (Phase 7) is also outstanding.
+- **`main` is enforced pull-request-only** by a GitHub ruleset — direct pushes are rejected.
 - **Every PR gets a preview deployment** at its own `*.iterventions.pages.dev` URL, because
   `deploy.yml` runs on `pull_request` too. Use it — that is how the deploy prune was verified.
 - **CI prunes non-site files before deploying.** Pages uploads everything it is given and honours
