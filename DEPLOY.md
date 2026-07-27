@@ -260,10 +260,11 @@ If `__local/` ever appears in that output, **stop** and fix `.gitignore` before 
 
 ---
 
-## Phase 1 — Log in to GitHub  · *done*
+## Phase 1 — Log in to GitHub
 
-*You have to do this one yourself — it opens a browser. Already done as `troup-miller`; kept
-here for a rebuild or a new machine.*
+✅ **Done** — logged in as `troup-miller`. Kept here for a rebuild or a new machine.
+
+*You have to do this one yourself — it opens a browser.*
 
 The `gh` CLI login is separate from the login git already uses for push and pull. You need it so
 that the next phases can store secrets and start workflows from the command line.
