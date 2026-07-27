@@ -79,4 +79,16 @@ jobs:
           echo "success:  $(grep -o '"success":[a-z]*' /tmp/a.json | head -1)"
           echo "accounts: $(grep -o '"id":"[0-9a-f]\{32\}"' /tmp/a.json | wc -l)"
           echo "errors:   $(grep -o '"message":"[^"]*"' /tmp/a.json | head -2)"
-          # Deliberately not printing the account id — this log may be public.
+          # Deliberately not printing the account id — this log is public.
+
+          echo ""
+          echo "--- does the Pages project exist? ---"
+          # Use the account id the token itself reports, without ever echoing it.
+          ACCID="$(grep -o '"id":"[0-9a-f]\{32\}"' /tmp/a.json | head -1 | cut -d'"' -f4)"
+          echo "real account id length: ${#ACCID}  (this is what the secret SHOULD hold)"
+          curl -s -o /tmp/p.json \
+            -H "Authorization: Bearer $TOK" \
+            "https://api.cloudflare.com/client/v4/accounts/$ACCID/pages/projects"
+          echo "success:  $(grep -o '"success":[a-z]*' /tmp/p.json | head -1)"
+          echo "projects named iterventions: $(grep -o '"name":"iterventions"' /tmp/p.json | wc -l)"
+          echo "errors:   $(grep -o '"message":"[^"]*"' /tmp/p.json | head -2)"
