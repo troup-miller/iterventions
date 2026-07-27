@@ -1,0 +1,10 @@
+# www -> apex, 301.
+#
+# The site declares the apex as canonical in <link rel="canonical">, og:url and
+# sitemap.xml, so www must not serve a second copy of everything.
+#
+# Doing it here rather than as a Cloudflare Redirect Rule keeps the behaviour in
+# the repo, where it is reviewable and travels with the project. :splat carries
+# the rest of the path through.
+
+https://www.iterventions.com/*  https://iterventions.com/:splat  301

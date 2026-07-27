@@ -1,0 +1,26 @@
+# Files that live in the repo but are not part of the website.
+#
+# Cloudflare Pages uploads the whole repo root, dotfiles included — verified:
+# before this file existed, /README.md, /DEPLOY.md, /CLAUDE.md,
+# /.github/workflows/deploy.yml and /.claude/agents/*.md all returned 200.
+# Nothing secret was exposed (the repo is public) but none of it is the site.
+#
+# gitignore syntax. Paths are relative to the deploy root.
+
+# Documentation — for people reading the repo, not visitors
+*.md
+
+# CI configuration
+.github/
+
+# Agent charters
+.claude/
+
+# Editor and git plumbing
+.editorconfig
+.gitattributes
+.gitignore
+
+# Note: _headers and _redirects are NOT listed here. Pages consumes them as
+# configuration and never serves them, so excluding them would only break
+# caching and the www redirect.
