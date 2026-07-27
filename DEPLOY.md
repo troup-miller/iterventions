@@ -6,9 +6,18 @@ This is written for someone who has not used Cloudflare Pages or GitHub Actions 
 step is copy-paste. Every step shows what a correct result looks like, so you can tell whether
 it worked without guessing.
 
-**Shell:** commands are written for **PowerShell** on Windows, which is what this machine opens
-by default. Where PowerShell differs from other shells it is called out. `git`, `gh` and `npx`
-behave identically everywhere; only variables and `curl` differ.
+**Shell:** commands are written for **Git Bash**, which is the shell in use on this machine.
+Where PowerShell needs a different form it is given underneath, marked *PowerShell*. `git`, `gh`
+and `npx` behave identically in both — only variables, `curl` and quoting differ:
+
+| | Git Bash | PowerShell |
+|---|---|---|
+| set a variable | `NAME=value` | `$env:NAME = "value"` |
+| read one | `$NAME` | `$env:NAME` |
+| curl | `curl` | `curl.exe` (bare `curl` is an alias for something else) |
+
+Mixing them up produces confusing errors — `bash: :NAME: command not found` means you pasted
+PowerShell syntax into bash.
 
 **Time:** about 30 minutes of actual work, plus up to 15 minutes of waiting for a TLS
 certificate at the end. You can walk away during the wait.
@@ -20,6 +29,7 @@ certificate at the end. You can walk away during the wait.
 - [Part 1 — What is actually going on](#part-1--what-is-actually-going-on)
 - [Part 2 — Vocabulary](#part-2--vocabulary)
 - [Part 3 — The one genuinely dangerous command](#part-3--the-one-genuinely-dangerous-command)
+- [What actually gets deployed](#what-actually-gets-deployed)
 - [Where things stand right now](#where-things-stand-right-now)
 - [Phase 0 — Check your tools](#phase-0--check-your-tools)
 - [Phase 1 — Log in to GitHub](#phase-1--log-in-to-github)
@@ -128,7 +138,7 @@ is not on GitHub, so it cannot upload what it does not have.
 **Manual deploys from this folder are not safe.** `wrangler` does **not** read `.gitignore`. If
 you run this:
 
-```powershell
+```bash
 npx wrangler pages deploy .        # ← DO NOT RUN THIS FROM THIS FOLDER
 ```
 
@@ -138,35 +148,77 @@ to a public website.
 **The rule:** deploy by `git push`. If you ever genuinely need a manual deploy, do it from a
 fresh clone in a temporary directory — a clone physically cannot contain `__local/`:
 
-```powershell
-git clone https://github.com/troup-miller/iterventions.git $env:TEMP\itv-deploy
-cd $env:TEMP\itv-deploy
+```bash
+git clone https://github.com/troup-miller/iterventions.git /tmp/itv-deploy
+cd /tmp/itv-deploy
 npx wrangler pages deploy . --project-name=iterventions
-cd C:\Users\troup\Repos\iterventions
-Remove-Item -Recurse -Force $env:TEMP\itv-deploy
+cd /c/users/troup/repos/iterventions
+rm -rf /tmp/itv-deploy
 ```
+
+Note that a manual deploy like this skips the CI prune step described below, so it will publish
+`README.md`, `CLAUDE.md` and friends. Another reason to let CI do it.
+
+---
+
+## What actually gets deployed
+
+Pages uploads **everything** in the directory it is given, dotfiles included. It does not read
+`.gitignore`, and it does not read `.assetsignore` either — that was tried against a preview
+deployment on wrangler 3.90 and every path it was supposed to exclude still returned 200,
+including `.assetsignore` itself. The only thing wrangler drops on its own is `.git/`.
+
+So `deploy.yml` prunes the checkout by hand before handing it over:
+
+```yaml
+      - name: Remove everything that is not the website
+        run: |
+          rm -rf .github .claude
+          rm -f ./*.md .editorconfig .gitattributes .gitignore
+```
+
+The runner's checkout is a throwaway on a rented machine, so deleting from it costs nothing and
+is completely deterministic — it does not depend on wrangler honouring anything.
+
+Without this step the deploy runbook, the agent charters and the CI configuration are all
+crawlable at `iterventions.com/DEPLOY.md` and friends. Nothing secret, since the repo is public,
+but none of it is the website.
+
+**If you add a new kind of non-site file to the repo, add it to that `rm` line.** Verify after
+deploying:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://iterventions.pages.dev/README.md   # want 404
+curl -s -o /dev/null -w '%{http_code}\n' https://iterventions.pages.dev/            # want 200
+```
+
+`_headers` and `_redirects` are deliberately **not** pruned. Pages consumes them as configuration
+and never serves them.
 
 ---
 
 ## Where things stand right now
 
-Verified on this machine, 2026-07-26.
+Verified 2026-07-26.
 
 | Thing | State |
 |---|---|
-| Repo on GitHub | ✅ `github.com/troup-miller/iterventions` |
-| Branches published | ✅ `main`, `dev` |
+| Repo on GitHub | ✅ `github.com/troup-miller/iterventions` (public) |
+| Branches | ✅ `main` (production, PR-only), `dev` (integration) |
 | Site content | ✅ 2 project pages, 22 images, ~6 MB, preflight GO |
 | `git` push/pull auth | ✅ working, account pinned to `troup-miller` |
 | Node.js | ✅ v24.15.0 (`npx` 11.12.1) |
-| `gh` CLI | ⬜ installed (2.92.0), **not logged in** |
-| Cloudflare API token | ⬜ not created |
-| Cloudflare account ID | ⬜ not recorded |
-| GitHub repo secrets | ⬜ not set |
-| Pages project | ⬜ not created |
-| Custom domain | ⬜ not attached |
+| `gh` CLI | ✅ logged in as `troup-miller` |
+| Cloudflare API token | ✅ created, Pages: Edit |
+| Cloudflare account ID | ✅ recorded |
+| GitHub repo secrets | ✅ both set |
+| Pages project | ✅ `iterventions`, production branch `main` |
+| **Deployed** | ✅ **live at `iterventions.pages.dev`** |
+| Custom domain | ⬜ `iterventions.com` not attached — Phase 6 |
+| Browser verification | ⬜ Phase 7, needs human eyes |
 
-Phases 1–4 are one-time. After that, deploying forever after is `git push`.
+Phases 1–5 are done. Deploying from here is `git push`. What remains is the domain and a
+look at it in a real browser.
 
 ---
 
@@ -174,8 +226,8 @@ Phases 1–4 are one-time. After that, deploying forever after is `git push`.
 
 Confirms you have what you need before starting. Nothing here changes anything.
 
-```powershell
-cd C:\Users\troup\Repos\iterventions
+```bash
+cd /c/users/troup/repos/iterventions
 git --version
 node --version
 gh --version
@@ -200,7 +252,7 @@ Nothing else here works without it.
 
 One safety check worth doing any time you add new files:
 
-```powershell
+```bash
 git status --short
 ```
 
@@ -208,9 +260,10 @@ If `__local/` ever appears in that output, **stop** and fix `.gitignore` before 
 
 ---
 
-## Phase 1 — Log in to GitHub
+## Phase 1 — Log in to GitHub  · *done*
 
-*You have to do this one yourself — it opens a browser.*
+*You have to do this one yourself — it opens a browser. Already done as `troup-miller`; kept
+here for a rebuild or a new machine.*
 
 The `gh` CLI login is separate from the login git already uses for push and pull. You need it so
 that the next phases can store secrets and start workflows from the command line.
@@ -238,7 +291,7 @@ Authorize. Back in the terminal it says `✓ Logged in as troup-miller`.
 
 **Confirm:**
 
-```powershell
+```bash
 gh auth status
 ```
 
@@ -295,20 +348,25 @@ one. If you lose it, no harm done: delete it and make another.
 
 ### 2b. Load the token into your terminal, without it hitting your command history
 
-Back in PowerShell:
+```bash
+read -rs CLOUDFLARE_API_TOKEN && export CLOUDFLARE_API_TOKEN
+```
+
+Press Enter, paste the token, press Enter again. Nothing echoes — `-s` is silent, so a blank
+line is what success looks like. `read` keeps the value out of your shell history, which typing
+`CLOUDFLARE_API_TOKEN=abc...` directly would not.
+
+*PowerShell:*
 
 ```powershell
 $env:CLOUDFLARE_API_TOKEN = Read-Host "Paste the Cloudflare API token"
 ```
 
-Press Enter, paste, press Enter again. `Read-Host` keeps the value out of your PowerShell
-history file, which typing `$env:X = "abc..."` directly would not.
-
-This variable lasts only as long as this terminal window. That is deliberate.
+Either way the variable lasts only as long as this terminal window. That is deliberate.
 
 ### 2c. Verify the token, and get your account ID for free
 
-```powershell
+```bash
 npx wrangler whoami
 ```
 
@@ -334,10 +392,25 @@ That 32-character hex string is your **account ID**. It is not secret. Copy it.
 permissions. Go back to 2a and check the three dropdowns on row 1 say exactly
 Account / Cloudflare Pages / Edit.
 
-Store the account ID in a variable too:
+**If you see `Invalid API Token` from a token you know is good** — see the note on account-owned
+tokens under [Phase 3](#phase-3--give-the-credentials-to-github). It is a red herring.
+
+Store the account ID in a variable too. Unlike the token this is not secret, so type it inline
+and **read it back before continuing** — putting the wrong value here is the single most likely
+way to break the deploy:
+
+```bash
+CLOUDFLARE_ACCOUNT_ID=paste-the-32-hex-here
+echo "${#CLOUDFLARE_ACCOUNT_ID} characters — must be 32"
+echo "$CLOUDFLARE_ACCOUNT_ID" | grep -Eq '^[0-9a-f]{32}$' && echo "shape OK" || echo "WRONG SHAPE"
+export CLOUDFLARE_ACCOUNT_ID
+```
+
+*PowerShell:*
 
 ```powershell
-$env:CLOUDFLARE_ACCOUNT_ID = "paste-the-32-character-id-here"
+$env:CLOUDFLARE_ACCOUNT_ID = "paste-the-32-hex-here"
+$env:CLOUDFLARE_ACCOUNT_ID.Length      # must print 32
 ```
 
 ---
@@ -347,10 +420,20 @@ $env:CLOUDFLARE_ACCOUNT_ID = "paste-the-32-character-id-here"
 Now hand both values to GitHub so the robot machine can use them. `gh secret set` reads from
 standard input, so piping the variable means the token never appears as text in a command.
 
+```bash
+printf '%s' "$CLOUDFLARE_API_TOKEN"  | gh secret set CLOUDFLARE_API_TOKEN
+printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | gh secret set CLOUDFLARE_ACCOUNT_ID
+gh secret list
+```
+
+`printf '%s'` rather than `echo` because `echo` appends a newline, and a secret with a trailing
+newline in it produces errors that look nothing like "you have a stray newline."
+
+*PowerShell:*
+
 ```powershell
 $env:CLOUDFLARE_API_TOKEN  | gh secret set CLOUDFLARE_API_TOKEN
 $env:CLOUDFLARE_ACCOUNT_ID | gh secret set CLOUDFLARE_ACCOUNT_ID
-gh secret list
 ```
 
 **What good looks like:**
@@ -372,6 +455,66 @@ history in plain text, where it stays.
 The names must match `deploy.yml` exactly — it looks for `CLOUDFLARE_API_TOKEN` and
 `CLOUDFLARE_ACCOUNT_ID`. Capitalisation counts.
 
+### The two mistakes that actually happened here
+
+Both of these bit on the first real attempt, on 2026-07-26. Neither error message named the
+actual problem, which is why they are written down.
+
+**1. The token got pasted into both secrets.** Two consecutive paste prompts look identical, and
+`CLOUDFLARE_ACCOUNT_ID` ended up holding the API token. Cloudflare then tried to route to
+`/accounts/<a whole API token>/pages/projects/iterventions` and returned:
+
+```
+Could not route to /client/v4/accounts/***/pages/projects/iterventions,
+perhaps your object identifier is invalid? [code: 7003]
+```
+
+**7003 means a URL path segment could not be parsed — read it as "your account ID is wrong."**
+The shape check in Phase 2c exists to catch exactly this before you get here.
+
+**2. The token was missing the Pages permission.** Hidden behind the first problem, and it would
+have failed next with `Authentication error`. A token can be perfectly valid, authenticate fine,
+list your account — and still be forbidden from touching Pages. Row 1 of the permissions table
+in Phase 2a is the one that matters.
+
+**And one red herring.** Cloudflare's own token-verify endpoint returns **401 Invalid API Token**
+for this token:
+
+```bash
+curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  https://api.cloudflare.com/client/v4/user/tokens/verify
+```
+
+That is expected and means nothing is wrong. `/user/tokens/verify` only accepts *user-owned*
+tokens — the ones created under **My Profile → API Tokens**. A token created under **Manage
+Account → API Tokens** is *account-owned*, and this endpoint rejects it while everything else
+works. Do not chase it.
+
+### Check the secrets before spending a deploy on them
+
+You cannot read a secret back, but you can check its shape. This is worth 20 seconds:
+
+```bash
+gh secret list                       # both names present?
+echo "${#CLOUDFLARE_ACCOUNT_ID}"     # 32
+echo "${#CLOUDFLARE_API_TOKEN}"      # 40+, and NOT equal to the line above
+```
+
+If those two lengths are the same number, you have pasted the same value into both. That was
+mistake 1.
+
+To prove the credentials work end to end before deploying — this is the call the deploy itself
+makes first:
+
+```bash
+curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects" \
+  | head -c 200
+```
+
+`"success":true` means the account ID parses and the token may touch Pages. Anything else and
+the deploy will fail for the reason shown there, more clearly than wrangler will phrase it.
+
 ---
 
 ## Phase 4 — Create the Pages project
@@ -379,7 +522,7 @@ The names must match `deploy.yml` exactly — it looks for `CLOUDFLARE_API_TOKEN
 The container on Cloudflare's side. It must be named `iterventions`, because that is what
 `.github/workflows/deploy.yml` passes to `--project-name`.
 
-```powershell
+```bash
 npx wrangler pages project create iterventions --production-branch main
 ```
 
@@ -391,7 +534,7 @@ npx wrangler pages project create iterventions --production-branch main
 
 **Confirm:**
 
-```powershell
+```bash
 npx wrangler pages project list
 ```
 
@@ -407,7 +550,7 @@ production branch will build previews forever and never go live.
 
 Everything is wired. Trigger a run:
 
-```powershell
+```bash
 gh workflow run "Deploy to Cloudflare Pages" --ref main
 gh run watch
 ```
@@ -427,13 +570,13 @@ JOBS
 
 **Find the URL your site is now on:**
 
-```powershell
-gh run view --log | Select-String "pages.dev"
+```bash
+gh run view --log | grep -o "https://.*pages.dev"
 ```
 
 Or:
 
-```powershell
+```bash
 npx wrangler pages deployment list --project-name=iterventions
 ```
 
@@ -445,7 +588,7 @@ problems on a URL nobody knows about.
 
 **If the run failed:**
 
-```powershell
+```bash
 gh run view --log-failed
 ```
 
@@ -473,13 +616,13 @@ Cloudflare writes the DNS records itself and issues a TLS certificate. The statu
 
 **Check from the terminal:**
 
-```powershell
+```bash
 nslookup iterventions.com
-curl.exe -sI https://iterventions.com | Select-String "HTTP/|server"
+curl -sI https://iterventions.com | grep -iE "HTTP/|server"
 ```
 
-In PowerShell you must write **`curl.exe`**, not `curl` — bare `curl` is an alias for a different
-PowerShell command that takes different arguments.
+*PowerShell:* write **`curl.exe`**, not `curl` — bare `curl` there is an alias for
+`Invoke-WebRequest`, which takes entirely different arguments and will just error.
 
 **What good looks like:** `HTTP/2 200` and a `server: cloudflare` line.
 
@@ -489,25 +632,31 @@ You now have two addresses serving identical content. Search engines dislike tha
 site's `<link rel="canonical">`, `og:url` and `sitemap.xml` all already say the bare domain
 `https://iterventions.com/`. So make `www` redirect to it.
 
-1. Dashboard → select the **iterventions.com** zone (not the Pages project) → **Rules** →
-   **Redirect Rules** → **Create rule**.
-2. **Rule name:** `www to apex`
-3. **If — Custom filter expression:** field `Hostname`, operator `equals`, value
-   `www.iterventions.com`
-4. **Then — Type:** Dynamic. **Expression:**
-   ```
-   concat("https://iterventions.com", http.request.uri.path)
-   ```
-5. **Status code:** `301`. Leave "Preserve query string" **on**.
-6. **Deploy**.
+**This is already handled in the repo.** There is a `_redirects` file at the root:
 
-**Verify:**
+```
+https://www.iterventions.com/*  https://iterventions.com/:splat  301
+```
 
-```powershell
-curl.exe -sI https://www.iterventions.com | Select-String "HTTP/|location"
+Pages reads `_redirects` as configuration and never serves it — confirmed, `/\_redirects`
+returns 404 on the live site. Keeping the rule in the repo rather than in the dashboard means
+it is reviewable in a diff and travels with the project.
+
+It cannot take effect until `www.iterventions.com` is actually attached to the Pages project in
+6a, because until then nothing is listening on that hostname.
+
+**Verify once the domain is attached:**
+
+```bash
+curl -sI https://www.iterventions.com | grep -iE "HTTP/|location"
 ```
 
 **What good looks like:** `HTTP/2 301` and `location: https://iterventions.com/`.
+
+If `_redirects` turns out not to fire — Pages' support for absolute-URL sources has changed over
+time — fall back to a dashboard Redirect Rule: zone `iterventions.com` → **Rules → Redirect
+Rules → Create**, if hostname equals `www.iterventions.com`, then dynamic
+`concat("https://iterventions.com", http.request.uri.path)`, status **301**.
 
 If you would rather serve `www` as the real address, that is a perfectly fine choice — but then
 reverse the rule *and* update the canonical link, `og:url` and `sitemap.xml` in `index.html` in
@@ -564,7 +713,7 @@ This list is the part that needs human eyes.
 
 From here on, publishing is:
 
-```powershell
+```bash
 git add -A
 git commit -m "what changed"
 git push
@@ -576,7 +725,7 @@ That is the entire loop. No build, no `node_modules`, no lockfile.
 Per this repo's branching rules (see `CLAUDE.md`), real work goes on a branch and reaches `main`
 through a pull request:
 
-```powershell
+```bash
 git switch dev
 git pull
 git switch -c feat/image-lightbox
@@ -589,7 +738,7 @@ gh pr create --base dev --fill
 
 Every branch you push gets its own preview URL, so you can look at the change before merging:
 
-```powershell
+```bash
 npx wrangler pages deployment list --project-name=iterventions
 ```
 
@@ -608,7 +757,7 @@ version ships again along with it.
 
 **Proper — undo the repo, let CI redeploy.**
 
-```powershell
+```bash
 git log --oneline -5           # find the bad commit's short hash
 git revert <hash>              # makes a NEW commit that undoes it
 git push
@@ -626,7 +775,12 @@ finish for the day.
 
 | What you see | What it means | What to do |
 |---|---|---|
-| `Authentication error [code: 10000]` | the API token lacks **Cloudflare Pages: Edit**, or is scoped to the wrong account | recreate the token — Phase 2a, check row 1 of the permissions table |
+| `Could not route to /client/v4/accounts/…​ [code: 7003]` | **`CLOUDFLARE_ACCOUNT_ID` is not an account ID.** Usually the API token pasted into it by mistake | re-set it — Phase 2c, and run the shape check |
+| `Authentication error [code: 10000]` | the API token lacks **Cloudflare Pages: Edit**, or is scoped to the wrong account | edit the token's permissions — Phase 2a, row 1 of the table. Editing keeps the same token value, so the secret does not need re-setting |
+| `Invalid API Token` from `/user/tokens/verify` | your token is account-owned, that endpoint only accepts user-owned ones | ignore it — test with the `/pages/projects` call in Phase 3 instead |
+| Deploy is green but `/README.md` serves | the prune step in `deploy.yml` is missing or incomplete | see [What actually gets deployed](#what-actually-gets-deployed) |
+| `bash: :NAME: command not found` | PowerShell syntax pasted into Git Bash | `NAME=value`, not `$env:NAME = "value"` |
+| `gh workflow run` says the workflow does not exist | `workflow_dispatch` is only exposed for workflows present on the **default branch** | trigger it with a push instead, or merge it to `main` first |
 | `Project not found` | the Pages project name and `--project-name` in `deploy.yml` disagree | `npx wrangler pages project list` and compare, exactly, including case |
 | Workflow does not start at all | you pushed to a branch other than `main`, or Actions is disabled | GitHub → repo → Settings → Actions → General → allow all actions |
 | Workflow fails instantly with a secrets error | Phase 3 did not take | `gh secret list` — both names must be there, spelled exactly |
@@ -647,8 +801,8 @@ finish for the day.
   banner, if it is ever wanted.
 - The image lightbox is not built. It is the top open item — 22 photographs and no way to see
   them full-size. See `CLAUDE.md`.
-- `main` has no branch protection rule, so "pull requests only" is currently a convention rather
-  than something GitHub enforces. One command fixes that, once `gh` is logged in.
+- The three `DATA PTS` figures on the home cards are the only numbers on the site not traceable
+  to a photograph or a log entry.
 
 ---
 
@@ -660,7 +814,7 @@ cached and nothing tells it which to use. Naming the account up front makes it r
 This is **already configured** on this machine. It is recorded here because `.git/config` is not
 part of the repository — a fresh clone will not have it, and you will get the picker again.
 
-```powershell
+```bash
 # 1. this repo (lives in .git/config — does NOT survive a fresh clone)
 git config --local user.name  "troup-miller"
 git config --local user.email "troup.miller@gmail.com"
@@ -680,9 +834,9 @@ token ever belongs in a URL, a config file, or this repo.
 
 **Check what git will actually send:**
 
-```powershell
+```bash
 git config --get-urlmatch credential https://github.com
-git config --list --show-origin | Select-String "credential.helper"
+git config --list --show-origin | grep credential.helper
 ```
 
 The first should report `username troup-miller`. The second should print **exactly one** helper
@@ -695,17 +849,17 @@ what caused the picker to appear here in the first place.
 
 ## Who does what
 
-| Step | Who | Why |
-|---|---|---|
-| Phase 0 — tool check | either | read-only |
-| Phase 1 — `gh auth login` | **you** | opens a browser |
-| Phase 2 — Cloudflare token | **you** | dashboard only, and it is secret material |
-| Phase 3 — repo secrets | **you** | the token must not pass through a transcript |
-| Phase 4 — Pages project | either | one command |
-| Phase 5 — first deploy | either | one command |
-| Phase 6 — custom domain | **you** | dashboard, and DNS mistakes are slow to undo |
-| Phase 7 — verification | **you** | needs a real browser and real eyes |
-| Routine deploys | either | `git push` |
+| Step | Who | Why | State |
+|---|---|---|---|
+| Phase 0 — tool check | either | read-only | ✅ |
+| Phase 1 — `gh auth login` | **you** | opens a browser | ✅ |
+| Phase 2 — Cloudflare token | **you** | dashboard only, and it is secret material | ✅ |
+| Phase 3 — repo secrets | **you** | the token must not pass through a transcript | ✅ |
+| Phase 4 — Pages project | either | one command | ✅ |
+| Phase 5 — first deploy | either | one command | ✅ |
+| Phase 6 — custom domain | **you** | dashboard, and DNS mistakes are slow to undo | ⬜ |
+| Phase 7 — verification | **you** | needs a real browser and real eyes | ⬜ |
+| Routine deploys | either | `git push` | — |
 
 The pattern: anything involving a browser, a password or a secret is yours. Anything that is a
 command with a predictable result can be handed to Claude.

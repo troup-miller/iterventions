@@ -12,13 +12,18 @@ Read this first; it saves re-deriving the state from git and the filesystem.
 - **Content is complete for the alpha.** Two project pages (`gauss` v00–v04 ACTIVE,
   `ordinance` v00–v06 MOTHBALLED), 8 sections each, 22 real photographs, 16 bench log entries,
   ~6 MB tracked across 40 files. Preflight GO.
-- **Repo is live** at `github.com/troup-miller/iterventions`. `main` and `dev` published.
+- **Repo is live** at `github.com/troup-miller/iterventions`, public. `main` and `dev` published.
   Git auth is pinned to account `troup-miller`; pushes are silent.
-- **Nothing is deployed.** Cloudflare Pages is not set up at all — no API token, no account ID,
-  no repo secrets, no Pages project, no custom domain. `DEPLOY.md` is the from-zero runbook and
-  Phases 1, 2, 3, 6 and 7 need a human with a browser.
-- **Consequence:** every PR shows a red ✗ because `deploy.yml` runs on `pull_request` and there
-  are no secrets. That is expected, not a broken site.
+- **The site is deployed** at `iterventions.pages.dev`. Cloudflare Pages project `iterventions`,
+  production branch `main`, both repo secrets set, `gh` logged in. Pushing to `main` publishes.
+- **`iterventions.com` is not attached yet** — Phase 6 of `DEPLOY.md`, dashboard work.
+  Browser verification (Phase 7) is also still outstanding.
+- **Every PR gets a preview deployment** at its own `*.iterventions.pages.dev` URL, because
+  `deploy.yml` runs on `pull_request` too. Use it — that is how the deploy prune was verified.
+- **CI prunes non-site files before deploying.** Pages uploads everything it is given and honours
+  neither `.gitignore` nor `.assetsignore` (tested). `deploy.yml` deletes `*.md`, `.github/` and
+  `.claude/` from the runner's checkout first. **Add to that `rm` line when adding a new kind of
+  non-site file**, or it becomes crawlable at `iterventions.com/…`.
 - **Top open work item** is the image lightbox — see *Known gaps* at the bottom.
 - `__local/` is 108 MB, gitignored, and exists only on this machine. It is not recoverable from
   the remote. Never delete or replace the working folder without checking it survived.
