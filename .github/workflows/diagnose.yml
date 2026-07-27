@@ -34,6 +34,22 @@ jobs:
           fi
 
           echo ""
+          echo "--- are they the same value? ---"
+          A_H="$(printf '%s' "$ACC" | sha256sum | cut -c1-8)"
+          T_H="$(printf '%s' "$TOK" | sha256sum | cut -c1-8)"
+          [ "$A_H" = "$T_H" ] && echo "IDENTICAL — the same string is in both secrets" \
+                              || echo "different values"
+
+          echo ""
+          echo "--- character classes in ACCOUNT_ID (no content) ---"
+          for c in / : . - _ ' ' '"' "'" '=' '?'; do
+            n="$(printf '%s' "$ACC" | tr -cd "$c" | wc -c)"
+            [ "$n" -gt 0 ] && echo "contains $n of [$c]"
+          done
+          echo "hex chars:   $(printf '%s' "$ACC" | tr -cd '0-9a-f' | wc -c) of ${#ACC}"
+          echo "uppercase:   $(printf '%s' "$ACC" | tr -cd 'A-Z'    | wc -c)"
+
+          echo ""
           echo "--- CLOUDFLARE_API_TOKEN ---"
           echo "present:        $([ -n "$TOK" ] && echo yes || echo NO)"
           echo "length:         ${#TOK}   (expected 40)"
