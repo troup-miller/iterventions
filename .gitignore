@@ -1,0 +1,13 @@
+# Handoff / design meta assets — never tracked, never deployed
+__local/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Editor / tooling noise
+.vscode/
+.idea/
+*.swp
+node_modules/
+.wrangler/
