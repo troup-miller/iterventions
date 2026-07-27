@@ -93,6 +93,25 @@ Read `__local/design_handoff_iterventions_alpha/README.md` first. It is the spec
 
 `__local/` is gitignored and must never be deployed — it is a 425 KB design prototype.
 
+## Branching
+
+`main` is production — Cloudflare Pages deploys from it. `dev` is the integration branch.
+**Keep `main`'s history clean at all times.**
+
+- Work happens on a feature branch cut from `dev`, named `kind/short-slug`
+  (`feat/`, `fix/`, `docs/`, `chore/`).
+- Publish the branch, open a PR into `dev`, merge with a **merge commit**.
+- `dev` → `main` is also a PR. Never push straight to `main`.
+- Rebase the feature branch on `dev` before merging rather than merging `dev` down into it —
+  that keeps the graph readable.
+
+Claude has standing authority to push and reset `dev` and any feature branch. `main` is
+by PR only.
+
+Note: `.github/workflows/deploy.yml` triggers on `pull_request` as well as on push to `main`,
+so every PR runs a deploy job. Until the Cloudflare secrets exist it fails — a red X on a PR
+right now means "no credentials", not "broken site". See `DEPLOY.md`.
+
 ## Agents
 
 Specialised charters live in `.claude/agents/`. Use them:

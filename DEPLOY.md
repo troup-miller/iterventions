@@ -13,8 +13,8 @@ Verified on this machine, 2026-07-26:
 
 | Thing | State |
 |---|---|
-| `git` repo | initialised, branch `main`, **zero commits** |
-| git remote | **none** |
+| `git` repo | branch `main` and `dev`, both at the same commit |
+| git remote | `origin` → `github.com/troup-miller/iterventions`, `main` and `dev` published |
 | GitHub CLI | `gh` 2.92.0 installed, **not logged in** |
 | `wrangler` | not installed — `npx` fetches it on demand (node v24 present) |
 | Cloudflare account ID | not yet recorded |
@@ -41,16 +41,53 @@ physically cannot contain `__local/`.
 
 ---
 
-## Phase 0 — Commit
+## Git identity — pinning the account
 
-Nothing is committed yet, so review first:
+Git Credential Manager shows an account picker whenever it has more than one GitHub
+account cached and nothing tells it which one to use. Naming the account up front makes it
+resolve silently. Three places do it, and they are cheap enough to do all three:
 
 ```bash
-git status --short          # expect ~39 files, no __local/
-git check-ignore -v __local/    # must print a match — this is the safety check
-git add -A
-git status --short           # confirm __local/ is still absent from the staged set
-git commit -m "alpha: iterventions.com — two project pages, 22 images, zero dependencies"
+# 1. this repo (.git/config — does NOT survive a fresh clone, so re-run it after cloning)
+git config --local user.name  "troup-miller"
+git config --local user.email "troup.miller@gmail.com"
+git config --local credential.https://github.com.username "troup-miller"
+git config --local credential.https://github.com.provider  "github"
+
+# 2. the remote URL — git then hands GCM a username on every request for this remote
+git remote set-url origin "https://troup-miller@github.com/troup-miller/iterventions.git"
+
+# 3. every repo on the machine (~/.gitconfig)
+git config --global credential.https://github.com.username "troup-miller"
+git config --global credential.https://github.com.provider  "github"
+```
+
+The account name in the URL is **not** a secret — it is the same string that appears in the
+repo path. No token ever goes in a URL, a config file, or this repo.
+
+Verify what git will actually send:
+
+```bash
+git config --get-urlmatch credential https://github.com   # expect username=troup-miller
+git config --list --show-origin | grep credential.helper  # expect exactly one: manager
+```
+
+More than one `credential.helper` in that last output means the chain is invoking GCM twice.
+One is correct.
+
+For the CLI, `gh auth login` stores its own credential separately from GCM; if several
+accounts end up in it, `gh auth switch` picks between them.
+
+---
+
+## Phase 0 — Commit  · *done*
+
+40 files, ~6 MB, published to `origin/main`. The safety check stays worth running before any
+commit that touches new paths:
+
+```bash
+git check-ignore -v __local/   # must print a match
+git status --short             # __local/ must never appear here
 ```
 
 If `__local/` appears in `git status` at any point, **stop** and fix `.gitignore` before continuing.
@@ -59,21 +96,18 @@ If `__local/` appears in `git status` at any point, **stop** and fix `.gitignore
 
 ## Phase 1 — GitHub  · *human, interactive*
 
-`gh` needs an interactive browser login. In this session, prefix with `!` so the output lands in the
-conversation:
+The repo exists at `github.com/troup-miller/iterventions` and pushes over HTTPS through GCM.
+The `gh` CLI is a separate login, still needed for Phase 3 (repo secrets) and Phase 5:
 
 ```
 ! gh auth login
 ```
 
-Choose: GitHub.com → HTTPS → authenticate via browser. Then:
+Choose: GitHub.com → HTTPS → authenticate via browser → account **troup-miller**. Then:
 
 ```bash
-gh auth status                      # confirm you are logged in
-gh repo create iterventions --private --source=. --push
+gh auth status                      # confirm the right account
 ```
-
-Keep it **private** until the alpha is reviewed. Pages deploys from private repos without complaint.
 
 ---
 
