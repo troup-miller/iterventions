@@ -22,7 +22,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Static site — no build step. Deploy the repo root as-is.
+      # Pages uploads everything in the deploy directory, dotfiles included, and
+      # wrangler has no working exclude mechanism for Pages — .assetsignore was
+      # tried and verified ignored on wrangler 3.90 (the file itself was served).
+      # wrangler does drop .git on its own; nothing else.
+      #
+      # This checkout is a throwaway on a rented machine, so prune it explicitly.
+      # Deterministic, and it does not depend on wrangler's behaviour.
+      - name: Remove everything that is not the website
+        run: |
+          rm -rf .github .claude
+          rm -f ./*.md .editorconfig .gitattributes .gitignore
+          echo "Deploying:"
+          ls -A
+
+      # Static site — no build step. What is left is exactly what gets served.
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
