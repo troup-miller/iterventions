@@ -5,6 +5,24 @@ Hosted on Cloudflare Pages, deployed by GitHub Actions on push to `main`. **No b
 
 The whole site is `index.html` — one file, hash-routed, zero dependencies.
 
+## Where things stand — 2026-07-26
+
+Read this first; it saves re-deriving the state from git and the filesystem.
+
+- **Content is complete for the alpha.** Two project pages (`gauss` v00–v04 ACTIVE,
+  `ordinance` v00–v06 MOTHBALLED), 8 sections each, 22 real photographs, 16 bench log entries,
+  ~6 MB tracked across 40 files. Preflight GO.
+- **Repo is live** at `github.com/troup-miller/iterventions`. `main` and `dev` published.
+  Git auth is pinned to account `troup-miller`; pushes are silent.
+- **Nothing is deployed.** Cloudflare Pages is not set up at all — no API token, no account ID,
+  no repo secrets, no Pages project, no custom domain. `DEPLOY.md` is the from-zero runbook and
+  Phases 1, 2, 3, 6 and 7 need a human with a browser.
+- **Consequence:** every PR shows a red ✗ because `deploy.yml` runs on `pull_request` and there
+  are no secrets. That is expected, not a broken site.
+- **Top open work item** is the image lightbox — see *Known gaps* at the bottom.
+- `__local/` is 108 MB, gitignored, and exists only on this machine. It is not recoverable from
+  the remote. Never delete or replace the working folder without checking it survived.
+
 ## Hard constraints
 
 - No CSS frameworks. No JS frameworks. No npm dependencies in the shipped site. No jQuery. No chart library.
