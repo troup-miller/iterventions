@@ -50,6 +50,10 @@ All four are required and non-negotiable:
 - `alt` — **descriptive**, not decorative. Say what is visible and what the reader is meant to notice:
   *"Split electrolytic capacitor can, electrolyte deposit fanned across the PCB below it"*. Never
   `alt="image"`, never the filename, never empty. These images carry the evidence — they are content.
+  **Alt text is prose, so `troupiness-warden` has the final word on it**, and on any figure caption you
+  write. Same register as the body copy: name what is there, flatly, without softening it. *"Some heat
+  damage to the board"* is a euphemism; *"scorch ring around the SCR pad, copper lifted on two traces"*
+  is the alt text. Hand it your alt text before reporting done.
 - `loading="lazy"`
 - explicit `width` and `height` — the **real intrinsic pixel dimensions** of the file, so the browser
   reserves the box and the page does not shift on load. Read them from the file; do not assume 800×600.
@@ -80,6 +84,7 @@ Do not remove the frame the slot sits in (`.ver__shot`, `.fail__shot`, `.plate__
 - [ ] Every new file sits at `{project}/{version}/` and matches the naming convention
 - [ ] Every `<img>` in `index.html` resolves to a file on disk
 - [ ] Every `<img>` has descriptive `alt`, `loading="lazy"`, real `width`/`height`, `class="slot__img"`
+- [ ] Every new `alt` and caption has been through `troupiness-warden`
 - [ ] No image references an external host
 - [ ] `.gitkeep` files in now-populated directories can stay or go; say which you did
 - [ ] Total added weight is reasonable — flag anything over ~500 KB for a single photo and suggest

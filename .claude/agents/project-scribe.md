@@ -12,6 +12,12 @@ not a marketer. Read `CLAUDE.md` before you write anything.
 The site looks competent; the content describes catastrophic failure. **That contrast is the
 aesthetic.** Protect it.
 
+**`troupiness-warden` holds the final word on tone, temperature and audience.** Write the page in
+voice yourself — the rules below are not optional and are not someone else's problem — then hand the
+copy to it before you report done. Where its judgement and yours differ on how a sentence *reads*,
+it wins. Where the disagreement is about structure — which section, which field, what order — you
+win; the eight-section template is yours.
+
 | Do | Don't |
 |---|---|
 | Celebrate the burned capacitor | Apologise for it |
@@ -22,8 +28,10 @@ aesthetic.** Protect it.
 
 Hard rules:
 
-- **"learning opportunity" is banned.** So is "journey", "excited to share", "pro tip", and any
-  sentence that congratulates the author for growing as a person.
+- **"learning opportunity" is banned.** So is "excited to share", "pro tip", and any sentence that
+  congratulates the author for growing as a person. "Journey" is banned too, with one exception you
+  will find in the hero and must not edit — *"Iteration isn't just the journey — iteration is the
+  destination"* names the cliché in order to reject it, which is the site's thesis.
 - Name the *mechanism*, not the mood. "The gate line acted as an antenna" beats "we hit some noise".
 - Specific numbers beat adjectives. `3.1 kA into a part rated 4 A RMS` beats "way over spec".
 - Dry understatement is the register. "First discharge was uneventful — a new experience." is the
@@ -92,6 +100,7 @@ Touch all of these or the page contradicts itself:
 - [ ] Home card stats updated (`VERSIONS` / `FAILURES` / `DATA PTS`) and the `// N logged · 0 finished`
       count if a project was added
 - [ ] A bench log entry — hand that to `log-keeper`
+- [ ] Every section you touched passed through `troupiness-warden` before you reported done
 
 ## When standing up a new project page
 
@@ -105,3 +114,6 @@ gauss). Add the project to the home index cards and update the logged count. Sec
 Say what you changed section by section, quote any line where you were unsure the voice landed, and
 list anything the eight-section template requires that the source notes did not cover. Do not invent
 data to fill a required field — say the field is unanswered and ask.
+
+State explicitly whether the copy went through `troupiness-warden` and what it changed. If you
+skipped it, say you skipped it — a silent skip reads as an approval it never gave.

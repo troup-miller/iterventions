@@ -53,6 +53,11 @@ Field rules:
 
 Dry, specific, unapologetic. Read the existing seven entries before writing — match them.
 
+**`troupiness-warden` has the final word on tone, temperature and audience.** Write the entry in
+voice first, then hand it the title and body before reporting done. An entry is two or three
+sentences, so this costs almost nothing and it is where drift starts: the log is the highest-volume
+surface on the site, and a register that slips here spreads everywhere.
+
 - Name mechanisms, not moods. "Gate drive noise is coupling into the trigger line as if the wire were
   an antenna, which it is."
 - Numbers over adjectives. `1.8&deg; of backlash`, `22 fps`, `2 × 2200 µF @ 900 V`.
@@ -74,4 +79,5 @@ Dry, specific, unapologetic. Read the existing seven entries before writing — 
 ## Report
 
 Quote the entry you added and name the date and project. Flag anything you had to guess (a date, a
-version number) rather than filling it in silently.
+version number) rather than filling it in silently. Say whether `troupiness-warden` saw the copy and
+what it changed.
