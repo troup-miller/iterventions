@@ -5,6 +5,24 @@ Hosted on Cloudflare Pages, deployed by GitHub Actions on push to `main`. **No b
 
 The whole site is `index.html` — one file, hash-routed, zero dependencies.
 
+## Where things stand — 2026-07-26
+
+Read this first; it saves re-deriving the state from git and the filesystem.
+
+- **Content is complete for the alpha.** Two project pages (`gauss` v00–v04 ACTIVE,
+  `ordinance` v00–v06 MOTHBALLED), 8 sections each, 22 real photographs, 16 bench log entries,
+  ~6 MB tracked across 40 files. Preflight GO.
+- **Repo is live** at `github.com/troup-miller/iterventions`. `main` and `dev` published.
+  Git auth is pinned to account `troup-miller`; pushes are silent.
+- **Nothing is deployed.** Cloudflare Pages is not set up at all — no API token, no account ID,
+  no repo secrets, no Pages project, no custom domain. `DEPLOY.md` is the from-zero runbook and
+  Phases 1, 2, 3, 6 and 7 need a human with a browser.
+- **Consequence:** every PR shows a red ✗ because `deploy.yml` runs on `pull_request` and there
+  are no secrets. That is expected, not a broken site.
+- **Top open work item** is the image lightbox — see *Known gaps* at the bottom.
+- `__local/` is 108 MB, gitignored, and exists only on this machine. It is not recoverable from
+  the remote. Never delete or replace the working folder without checking it survived.
+
 ## Hard constraints
 
 - No CSS frameworks. No JS frameworks. No npm dependencies in the shipped site. No jQuery. No chart library.
@@ -92,6 +110,25 @@ The iteration-loop canvas dwells **2600 ms on Failure** against 900 ms for every
 Read `__local/design_handoff_iterventions_alpha/README.md` first. It is the spec for every measurement, colour and motion timing on the site, and `__local/design_handoff_iterventions_alpha/design/Iterventions.dc.html` is the design source of truth.
 
 `__local/` is gitignored and must never be deployed — it is a 425 KB design prototype.
+
+## Branching
+
+`main` is production — Cloudflare Pages deploys from it. `dev` is the integration branch.
+**Keep `main`'s history clean at all times.**
+
+- Work happens on a feature branch cut from `dev`, named `kind/short-slug`
+  (`feat/`, `fix/`, `docs/`, `chore/`).
+- Publish the branch, open a PR into `dev`, merge with a **merge commit**.
+- `dev` → `main` is also a PR. Never push straight to `main`.
+- Rebase the feature branch on `dev` before merging rather than merging `dev` down into it —
+  that keeps the graph readable.
+
+Claude has standing authority to push and reset `dev` and any feature branch. `main` is
+by PR only.
+
+Note: `.github/workflows/deploy.yml` triggers on `pull_request` as well as on push to `main`,
+so every PR runs a deploy job. Until the Cloudflare secrets exist it fails — a red X on a PR
+right now means "no credentials", not "broken site". See `DEPLOY.md`.
 
 ## Agents
 

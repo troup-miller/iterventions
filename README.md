@@ -41,17 +41,24 @@ python -m http.server 8000     # then visit http://localhost:8000
 Bare `#project` is a legacy alias for `#project/gauss`. Anything else falls back to `#home`.
 `#sec-*` fragments are in-page anchors on the project pages, not routes.
 
+## Branching
+
+`main` is production, by pull request only. `dev` is the integration branch. Feature branches are
+cut from `dev`, named `kind/short-slug`, and merged back with a merge commit. Details in
+[`CLAUDE.md`](CLAUDE.md).
+
 ## Deploying
 
 Push to `main`. `.github/workflows/deploy.yml` runs `wrangler pages deploy .` against the
 `iterventions` Pages project. Every other branch gets a preview deployment at
 `<branch>.iterventions.pages.dev`.
 
-Two repo secrets are required — `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+Two repo secrets are required — `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. **Neither is
+set yet, so nothing deploys yet.**
 
-**[`DEPLOY.md`](DEPLOY.md) is the runbook**: credential enablement, exact API-token scopes, Pages
-project creation, custom domain and redirect, a browser verification checklist, and rollback. Start
-there — none of it is set up yet.
+**[`DEPLOY.md`](DEPLOY.md) is the runbook.** It is written from zero: what Pages actually is, what
+a token is for, every command copy-paste with its expected output, custom domain and redirect,
+a browser verification checklist, rollback, and a troubleshooting table. Start there.
 
 One warning worth repeating here: `wrangler` does not read `.gitignore`, so never run
 `npx wrangler pages deploy .` from this directory — it would upload the 108 MB `__local/` folder.
