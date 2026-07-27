@@ -5,6 +5,10 @@
 name: Diagnose secret shape
 
 on:
+  # workflow_dispatch is only exposed for workflows that exist on the
+  # default branch, so this runs on push to its own branch instead.
+  push:
+    branches: [fix/deploy-secret-shape]
   workflow_dispatch:
 
 jobs:
