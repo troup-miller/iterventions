@@ -72,7 +72,29 @@ Read-then-report. You do not fix; you hand back a go / no-go with the reasons.
 - `_headers` — `/index.html` is `no-cache`/`must-revalidate` so content updates are immediate, and
   image types are `immutable`. If a new image extension is in use with no matching rule, flag it.
 
-## 7. Hand off what you can't test
+## 7. Copy
+
+You are not the voice editor — `troupiness-warden` is, and it holds the final word on tone. But a
+banned phrase reaching production is a mechanical failure, not a matter of taste, so grep for it:
+
+```bash
+grep -niE 'learning opportunit|journey|excited to|pro tip|game.chang|revolutionar|next.generation|two axes' index.html 404.html
+```
+
+Every hit is a **blocker**, with two known-good exceptions that must both still be there:
+
+- **`journey` appears exactly twice** — the hero tagline and its `og:description` twin, *"Iteration
+  isn't just the journey — iteration is the destination."* That line rejects the cliché rather than
+  using it, and it is site copy. A **third** hit is a blocker; a count below two means the tagline
+  got edited and that is a finding of its own.
+- **`rail gun`** is the running joke and appears throughout the Gauss v00 material — timeline,
+  failure card, log entry, alt text. It is only a blocker where the copy uses it as the machine's
+  actual name. Grep it separately and read the context; do not count lines.
+
+Then confirm any visible text that changed since the last deploy went through `troupiness-warden`.
+If it didn't, that is a finding, not a blocker — say so and let the human decide whether to ship.
+
+## 8. Hand off what you can't test
 
 State plainly that these need a browser and are **not** covered by this pass — do not imply they
 passed:

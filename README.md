@@ -78,7 +78,9 @@ Read `CLAUDE.md` first. The short version:
 - **A new project** → duplicate a `<main data-route="project/…">` block, namespace its section ids,
   and add the slug to `PROJECTS` and `TITLES` in the script.
 
-There are agent charters in `.claude/agents/` for each of these.
+There are agent charters in `.claude/agents/` for each of these. Whatever you are adding, the copy
+goes through `troupiness-warden` before it ships — it holds the final word on tone, temperature and
+audience, and it is where the voice is actually specified.
 
 ## Project status
 

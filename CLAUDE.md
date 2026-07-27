@@ -57,6 +57,8 @@ The site looks competent; the content describes catastrophic failure. **That con
 
 Banned phrase: **"learning opportunity."** Euphemism for a failure mechanism is a bug — name the actual mechanism.
 
+This section is the constitution. **`.claude/agents/troupiness-warden.md` is the case law** — it holds the final word on tone, temperature and audience, and it defines the last two, which are not written down anywhere else. Read it before writing copy, and hand copy to it before shipping. It enforces this section; it does not amend it.
+
 **Don't hand the reader a reason to argue about grammar instead of engineering.** Where a technically-correct construction reads as fussy, choose the plain one — write **"dual-axis"**, never "two axes". The prose should never make a correct plural the most interesting thing in the sentence. Singular "pan axis" / "tilt axis" is fine.
 
 **Naming:** PROJECT #001 is titled *Gauss Sequencer* and the machine is called a **coil gun** in body copy — never a rail gun, which is the running joke and the v00 failure card. PROJECT #002 is titled *Residential Ordinance Platform* and its mechanism is a **pan-tilt** in body copy. Route slugs (`gauss`, `ordinance`) and image directories stay as they are; they are not display names.
@@ -143,11 +145,21 @@ Specialised charters live in `.claude/agents/`. Use them:
 
 | Agent | Use when |
 |---|---|
+| `troupiness-warden` | **Any change to visible prose** — final word on tone, temperature and audience |
 | `token-warden` | Any visual change — audits token discipline before it lands |
 | `project-scribe` | Adding a project, or a new version to an existing project |
 | `log-keeper` | Adding a bench log entry |
 | `asset-curator` | Photographs arrive and need naming, placing, and slot replacement |
 | `deploy-preflight` | Before pushing to `main` |
+
+**Two wardens, one boundary.** `token-warden` owns everything visual and never comments on wording.
+`troupiness-warden` owns everything verbal and never touches a token, class or tag. Anything a reader
+*reads* — body copy, field values, captions, `alt` text, `<title>`, the meta description — goes
+through `troupiness-warden` before it ships. It is the last word on how the site sounds; the *Voice*
+section above is the constitution it enforces and cannot amend.
+
+`project-scribe`, `log-keeper` and `asset-curator` all write copy, and all three hand it over before
+reporting done. Structure stays with `project-scribe`; tone does not.
 
 ## Known gaps (alpha → beta)
 
