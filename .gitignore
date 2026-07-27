@@ -4,10 +4,41 @@ __local/
 # OS noise
 .DS_Store
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
 
 # Editor / tooling noise
 .vscode/
 .idea/
 *.swp
+*~
 node_modules/
 .wrangler/
+
+# Python noise — no Python ships with this site, but scripts get written
+# in the working tree and their droppings must never reach Pages.
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.venv/
+venv/
+env/
+
+# Secrets — nothing credentialed belongs in this repo. See DEPLOY.md.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Scratch — anything meant to stay local
+scratch/
+tmp/
+*.log
+*.bak
+*.orig
+*.rej
