@@ -1,0 +1,42 @@
+# Throwaway diagnostic. Reports the SHAPE of the Cloudflare secrets —
+# length, character class, stray whitespace — and never their contents.
+# Delete this file once the deploy is green.
+
+name: Diagnose secret shape
+
+on:
+  workflow_dispatch:
+
+jobs:
+  shape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect
+        env:
+          ACC: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TOK: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "--- CLOUDFLARE_ACCOUNT_ID ---"
+          echo "present:        $([ -n "$ACC" ] && echo yes || echo NO)"
+          echo "length:         ${#ACC}   (expected 32)"
+          TRIM_ACC="$(printf '%s' "$ACC" | tr -d '[:space:]')"
+          echo "length trimmed: ${#TRIM_ACC}"
+          if [ "${#ACC}" -ne "${#TRIM_ACC}" ]; then
+            echo "VERDICT:        contains whitespace — this is the bug"
+          elif printf '%s' "$ACC" | grep -Eq '^[0-9a-f]{32}$'; then
+            echo "VERDICT:        well-formed 32-char lowercase hex"
+          else
+            echo "VERDICT:        wrong shape — not 32 lowercase hex chars"
+          fi
+
+          echo ""
+          echo "--- CLOUDFLARE_API_TOKEN ---"
+          echo "present:        $([ -n "$TOK" ] && echo yes || echo NO)"
+          echo "length:         ${#TOK}   (expected 40)"
+          TRIM_TOK="$(printf '%s' "$TOK" | tr -d '[:space:]')"
+          echo "length trimmed: ${#TRIM_TOK}"
+          if [ "${#TOK}" -ne "${#TRIM_TOK}" ]; then
+            echo "VERDICT:        contains whitespace — also broken"
+          else
+            echo "VERDICT:        no stray whitespace"
+          fi
